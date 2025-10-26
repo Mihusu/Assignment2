@@ -54,6 +54,25 @@ public class BigramFrequencyStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here.
 			 */
+			for (int i = 0; i < words.length - 1; i++) {
+				String word1 = words[i];
+				String word2 = words[i + 1];
+				
+				// Skip if words are empty
+				if (word1.isEmpty() || word2.isEmpty()) {
+					continue;
+				}
+				
+				// Set the key to the current word
+				KEY.set(word1);
+				
+				// Create or update the stripe for this word
+				STRIPE.clear();
+				STRIPE.put(word2, 1);
+				
+				// Emit the stripe
+				context.write(KEY, STRIPE);
+			}
 		}
 	}
 
@@ -75,6 +94,38 @@ public class BigramFrequencyStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here
 			 */
+			SUM_STRIPES.clear();
+			
+			// Aggregate all stripes for this key
+			for (HashMapStringIntWritable stripe : stripes) {
+				for (Map.Entry<String, Integer> entry : stripe.entrySet()) {
+					String rightWord = entry.getKey();
+					int count = entry.getValue();
+					SUM_STRIPES.increment(rightWord, count);
+				}
+			}
+			
+			// Calculate total count for this key (sum of all values in the stripe)
+			int total = 0;
+			for (int count : SUM_STRIPES.values()) {
+				total += count;
+			}
+			
+			// First output the total count for this word
+			BIGRAM.set(key.toString(), "");
+			FREQ.set((float) total);
+			context.write(BIGRAM, FREQ);
+			
+			// Then output relative frequencies for each bigram
+			for (Map.Entry<String, Integer> entry : SUM_STRIPES.entrySet()) {
+				String rightWord = entry.getKey();
+				int count = entry.getValue();
+				float relativeFrequency = (float) count / total;
+				
+				BIGRAM.set(key.toString(), rightWord);
+				FREQ.set(relativeFrequency);
+				context.write(BIGRAM, FREQ);
+			}
 		}
 	}
 
@@ -94,6 +145,19 @@ public class BigramFrequencyStripes extends Configured implements Tool {
 			/*
 			 * TODO: Your implementation goes here
 			 */
+			SUM_STRIPES.clear();
+			
+			// Aggregate all stripes for this key
+			for (HashMapStringIntWritable stripe : stripes) {
+				for (Map.Entry<String, Integer> entry : stripe.entrySet()) {
+					String rightWord = entry.getKey();
+					int count = entry.getValue();
+					SUM_STRIPES.increment(rightWord, count);
+				}
+			}
+			
+			// Emit the combined stripe
+			context.write(key, SUM_STRIPES);
 		}
 	}
 

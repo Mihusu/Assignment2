@@ -50,27 +50,61 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 			String line = ((Text) value).toString();
 			String[] words = line.trim().split("\\s+");
 			
-			/*
-			 * TODO: Your implementation goes here.
-			 */
+			for (int i = 0; i < words.length - 1; i++) {
+				String word1 = words[i];
+				String word2 = words[i + 1];
+				
+				// Skip if words are empty after cleaning
+				if (word1.isEmpty() || word2.isEmpty()) {
+					continue;
+				}
+				// Emit the actual bigram (word1, word2)
+				BIGRAM.set(word1, word2);
+				context.write(BIGRAM, ONE);
+				
+				// Emit special counter for the left word (word1, *) to calculate total occurrences
+				BIGRAM.set(word1, "*");
+				context.write(BIGRAM, ONE);
+			}
 		}
 	}
 
 	/*
-	 * TODO: Write your reducer here
+	 * Reducer implementation for computing relative frequencies
 	 */
 	private static class MyReducer extends
 			Reducer<PairOfStrings, IntWritable, PairOfStrings, FloatWritable> {
 
 		// Reuse objects.
 		private final static FloatWritable VALUE = new FloatWritable();
+		private String currentLeft = null;
+		private float currentTotal = 0;
 
 		@Override
 		public void reduce(PairOfStrings key, Iterable<IntWritable> values,
 				Context context) throws IOException, InterruptedException {
-			/*
-			 * TODO: Your implementation goes here.
-			 */
+			// If this is the special counter (word, "*"), sum up all counts for this word
+			int sum = 0;
+			
+			for (IntWritable value : values) {
+				sum += value.get();
+			}
+			
+			if (key.getRightElement().equals("*")) {
+		        // update the marginal for this left word
+		        currentLeft = key.getLeftElement();
+		        currentTotal = sum;
+		        // output total count line: A \t <total>
+		        VALUE.set(currentTotal);
+		        context.write(new PairOfStrings(currentLeft, ""), VALUE);
+		    } else if (key.getLeftElement().equals(currentLeft) && currentTotal > 0) {
+	              float relFreq = (float) sum / currentTotal;
+
+	              // output relative frequency line: A \t B \t <freq>
+	              VALUE.set(relFreq);
+	              context.write(key, VALUE);
+	          }
+
 		}
 	}
 	
@@ -81,9 +115,13 @@ public class BigramFrequencyPairs extends Configured implements Tool {
 		@Override
 		public void reduce(PairOfStrings key, Iterable<IntWritable> values,
 				Context context) throws IOException, InterruptedException {
-			/*
-			 * TODO: Your implementation goes here.
-			 */
+			// Sum up all counts for the same key
+			int sum = 0;
+			for (IntWritable value : values) {
+				sum += value.get();
+			}
+			SUM.set(sum);
+			context.write(key, SUM);
 		}
 	}
 
