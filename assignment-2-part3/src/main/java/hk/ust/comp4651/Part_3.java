@@ -134,7 +134,28 @@ public class Part_3 {
 
     /** Recursively delete ALL empty files (length == 0) under 'root'. */
     public static void delEmptyFilesRecursive(Path root) throws IOException {
-
+FileSystem fs = fs();
+        
+        // Safety check - ensure we're operating within the allowed directory
+        ensureUnder(fs, root, root);
+        
+        if (!fs.exists(root)) {
+            return; // Directory doesn't exist, nothing to delete
+        }
+        
+        FileStatus[] statuses = fs.listStatus(root);
+        for (FileStatus status : statuses) {
+            if (status.isDirectory()) {
+                // Recursively process subdirectories
+                delEmptyFilesRecursive(status.getPath());
+            } else {
+                // Check if file is empty and delete if true
+                if (status.getLen() == 0) {
+                    fs.delete(status.getPath(), false); // false means don't recursive delete directories
+                    System.out.println("Deleted empty file: " + status.getPath());
+                }
+            }
+        }
     }
 
     /**
@@ -142,7 +163,29 @@ public class Part_3 {
      * Exact suffix match, case-sensitive. Example: ".tmp" matches "a.tmp" but NOT "a.tmp.bak".
      */
     public static void delBySuffixRecursive(Path root, String suffix) throws IOException {
-
+		FileSystem fs = fs();
+        
+        // Safety check - ensure we're operating within the allowed directory
+        ensureUnder(fs, root, root);
+        
+        if (!fs.exists(root)) {
+            return; // Directory doesn't exist, nothing to delete
+        }
+        
+        FileStatus[] statuses = fs.listStatus(root);
+        for (FileStatus status : statuses) {
+            if (status.isDirectory()) {
+                // Recursively process subdirectories
+                delBySuffixRecursive(status.getPath(), suffix);
+            } else {
+                // Check if file ends with the specified suffix and delete if true
+                String fileName = status.getPath().getName();
+                if (fileName.endsWith(suffix)) {
+                    fs.delete(status.getPath(), false);
+                    System.out.println("Deleted file with suffix " + suffix + ": " + status.getPath());
+                }
+            }
+        }
     }
 
     /**
