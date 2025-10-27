@@ -106,7 +106,7 @@ public class BigramCountStripes extends Configured implements Tool {
 	            String second_w = (String) mapElement.getKey(); 
 	            int value = (int) mapElement.getValue();
 	            BIGRAM.set(first_w, second_w);
-	            COUNT.set(value);
+	            COUNT.set(value*2);
 	            context.write(BIGRAM, COUNT);
 	        }
 	        

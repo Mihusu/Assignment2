@@ -152,7 +152,6 @@ FileSystem fs = fs();
                 // Check if file is empty and delete if true
                 if (status.getLen() == 0) {
                     fs.delete(status.getPath(), false); // false means don't recursive delete directories
-                    System.out.println("Deleted empty file: " + status.getPath());
                 }
             }
         }
@@ -182,7 +181,6 @@ FileSystem fs = fs();
                 String fileName = status.getPath().getName();
                 if (fileName.endsWith(suffix)) {
                     fs.delete(status.getPath(), false);
-                    System.out.println("Deleted file with suffix " + suffix + ": " + status.getPath());
                 }
             }
         }
@@ -200,10 +198,6 @@ FileSystem fs = fs();
 
         // Use a robust, portable base under the user's Hadoop home directory
         Path base = new Path(fs.getHomeDirectory(), "part3");
-
-        // Print both logical and actual sandbox for visibility
-        System.out.println("Sandbox (logical): " + sandboxPrefix(user));
-        System.out.println("Sandbox (actual) : " + base.makeQualified(fs.getUri(), fs.getWorkingDirectory()));
 
         // Repeatable runs: clean then create
         if (fs.exists(base)) fs.delete(base, true);
