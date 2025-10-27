@@ -1,7 +1,5 @@
 # COMP 4651 - Assignment2 - MingHui Sun
 
-## Assignment 2 for COMP4651 in 2025 Fall
-
 ### Graded Locations
 
 #### Part 1 (4 marks): Pairs & Stripes
